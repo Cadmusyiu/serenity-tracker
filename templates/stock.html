@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ stock.ticker }} — Serenity Tracker{% endblock %}
+{% block css_root %}../assets{% endblock %}
+{% block home %}../index.html{% endblock %}
+
+{% block content %}
+<section class="stock-head">
+  <a href="../index.html" class="back">← 返回列表</a>
+  <h1>
+    {{ stock.ticker }}
+    <span class="stance-badge stance-{{ stock.latest_stance }}">
+      最新：{{ stock.latest_stance|stance_emoji }} {{ stock.latest_stance|stance_label }}
+    </span>
+  </h1>
+  <div class="stock-meta">
+    共 <strong>{{ stock.count }}</strong> 次提及 ·
+    首次 {{ stock.first_at|fmt_dt }} ·
+    最近 {{ stock.last_at|fmt_dt }}
+  </div>
+
+  <div class="dist-box">
+    <div class="dist-title">立場分佈</div>
+    <div class="stance-bar big">
+      <span class="seg bullish" style="width: {{ (stock.stance_counts.bullish / stock.count * 100) if stock.count else 0 }}%"></span>
+      <span class="seg bearish" style="width: {{ (stock.stance_counts.bearish / stock.count * 100) if stock.count else 0 }}%"></span>
+      <span class="seg neutral" style="width: {{ (stock.stance_counts.neutral / stock.count * 100) if stock.count else 0 }}%"></span>
+    </div>
+    <div class="stance-legend">
+      <span>🟢 看多 {{ stock.stance_counts.bullish }}</span>
+      <span>🔴 看空 {{ stock.stance_counts.bearish }}</span>
+      <span>⚪ 中立 {{ stock.stance_counts.neutral }}</span>
+    </div>
+  </div>
+</section>
+
+<section class="timeline">
+  <h2>立場時間軸（由新到舊）</h2>
+  {% for m in stock.mentions %}
+  <div class="tl-item stance-{{ m.stance }}">
+    <div class="tl-dot">{{ m.stance|stance_emoji }}</div>
+    <div class="tl-body">
+      <div class="tl-head">
+        <span class="stance-badge stance-{{ m.stance }}">{{ m.stance|stance_label }}</span>
+        <span class="tl-date">{{ m.created_at|fmt_dt }}</span>
+      </div>
+      <p class="tl-rationale">{{ m.rationale }}</p>
+      <p class="tl-text">{{ m.text[:280] }}{% if m.text|length > 280 %}…{% endif %}</p>
+      <a class="tl-link" href="{{ m.tweet_url }}" target="_blank" rel="noopener">查看原文 →</a>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+{% endblock %}

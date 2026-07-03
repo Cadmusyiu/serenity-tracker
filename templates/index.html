@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Serenity Tracker — @{{ handle }}{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <h1>Serenity 的股票觀點追蹤</h1>
+  <p class="hero-sub">
+    每小時抓取 @{{ handle }} 的公開貼文 → AI 抽取提及股票並分類立場 → 累積成可搜尋的歷史弧線。
+  </p>
+  <div class="stats">
+    <div class="stat"><span class="stat-num">{{ total_mentions }}</span><span class="stat-label">總提及次數</span></div>
+    <div class="stat"><span class="stat-num">{{ stocks|length }}</span><span class="stat-label">追蹤股票數</span></div>
+    <div class="stat"><span class="stat-num">{{ window_counts.daily }}</span><span class="stat-label">今日活躍</span></div>
+    <div class="stat"><span class="stat-num">{{ window_counts.weekly }}</span><span class="stat-label">本週活躍</span></div>
+  </div>
+</section>
+
+<section class="controls">
+  <div class="tabs" id="windowTabs">
+    <button class="tab active" data-window="all">全部</button>
+    <button class="tab" data-window="daily">今日</button>
+    <button class="tab" data-window="weekly">本週（7天）</button>
+    <button class="tab" data-window="monthly">本月（28天）</button>
+    <button class="tab" data-window="quarterly">本季（90天）</button>
+  </div>
+  <input type="search" id="searchBox" class="search" placeholder="搜尋股票代碼...">
+</section>
+
+<section class="stock-grid" id="stockGrid">
+  {% for s in stocks %}
+  <a class="card" href="stocks/{{ s.ticker }}.html"
+     data-ticker="{{ s.ticker|upper }}"
+     data-last-iso="{{ s.last_at }}">
+    <div class="card-top">
+      <span class="ticker">{{ s.ticker }}</span>
+      <span class="stance-badge stance-{{ s.latest_stance }}">
+        {{ s.latest_stance|stance_emoji }} {{ s.latest_stance|stance_label }}
+      </span>
+    </div>
+    <div class="card-meta">
+      <span>提及 <strong>{{ s.count }}</strong> 次</span>
+      <span class="dot">·</span>
+      <span>最近 {{ s.last_at|fmt_dt }}</span>
+    </div>
+    <div class="stance-bar">
+      <span class="seg bullish" style="width: {{ (s.stance_counts.bullish / s.count * 100) if s.count else 0 }}%"></span>
+      <span class="seg bearish" style="width: {{ (s.stance_counts.bearish / s.count * 100) if s.count else 0 }}%"></span>
+      <span class="seg neutral" style="width: {{ (s.stance_counts.neutral / s.count * 100) if s.count else 0 }}%"></span>
+    </div>
+    <div class="stance-legend">
+      <span>🟢 {{ s.stance_counts.bullish }}</span>
+      <span>🔴 {{ s.stance_counts.bearish }}</span>
+      <span>⚪ {{ s.stance_counts.neutral }}</span>
+    </div>
+  </a>
+  {% else %}
+  <p class="empty">尚無資料。執行 Phase 2（設定 API keys）後即會自動填入。</p>
+  {% endfor %}
+</section>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('#windowTabs .tab');
+  var search = document.getElementById('searchBox');
+  var cards = document.querySelectorAll('#stockGrid .card');
+  var DAYS = { all: Infinity, daily: 1, weekly: 7, monthly: 28, quarterly: 90 };
+  var now = Date.now();
+  var currentWindow = 'all';
+
+  function applyFilter() {
+    var q = (search.value || '').trim().toUpperCase();
+    var limit = DAYS[currentWindow] * 86400000;
+    cards.forEach(function (card) {
+      var lastIso = card.getAttribute('data-last-iso');
+      var lastMs = lastIso ? Date.parse(lastIso.replace(' ', 'T')) : NaN;
+      var inWindow = (currentWindow === 'all') || (now - lastMs <= limit);
+      var matchQ = !q || card.getAttribute('data-ticker').indexOf(q) !== -1;
+      card.style.display = (inWindow && matchQ) ? '' : 'none';
+    });
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      currentWindow = tab.getAttribute('data-window');
+      applyFilter();
+    });
+  });
+  search.addEventListener('input', applyFilter);
+})();
+</script>
+{% endblock %}

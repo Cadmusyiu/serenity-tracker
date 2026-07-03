@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Serenity Tracker{% endblock %}</title>
+  <link rel="stylesheet" href="{% block css_root %}assets{% endblock %}/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a href="{% block home %}index.html{% endblock %}" class="brand">
+        <span class="brand-mark">◎</span>
+        <span class="brand-name">Serenity Tracker</span>
+      </a>
+      <div class="brand-sub">追蹤 <strong>@{{ handle }}</strong>{% if display_name %}（{{ display_name }}）{% endif %} 的 X 股票觀點</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p class="disclaimer">
+        ⚠️ <strong>免責聲明：</strong>本儀表板的立場標籤（看多／看空／中立）為 AI 推斷，可能不準。
+        僅彙整公開貼文，<strong>非投資建議</strong>。本工具與 Serenity 無任何關聯，純研究用途。
+        一切請回<a href="https://x.com/{{ handle }}" target="_blank" rel="noopener">原文</a>並獨立查證。
+      </p>
+      <p class="gen-time">最後更新：{{ generated_at }}</p>
+    </div>
+  </footer>
+</body>
+</html>
