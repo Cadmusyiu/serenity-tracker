@@ -33,6 +33,10 @@ def run_sample() -> None:
 
 def run_live() -> None:
     """Phase 2：完整管線 fetch → classify → merge → build。"""
+    if not os.environ.get("SOCIALDATA_API_KEY"):
+        print("⏭️ [live] SOCIALDATA_API_KEY 未設定（Phase 2 尚未接 keys）— skip live pipeline")
+        return
+
     from build import build
     from classify import classify_tweets
     from fetcher import SocialDataFetcher

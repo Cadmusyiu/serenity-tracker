@@ -1,0 +1,49 @@
+name: track
+
+# Phase 1（無 secrets）：main.py 偵測缺 key 會 graceful skip，workflow 不會紅。
+# Phase 2：設好 SOCIALDATA_API_KEY / ZAI_* secrets 後，每小時自動抓→分類→更新 dashboard。
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7 * * * *'  # 每小時 :07（避開整點流量）
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: track
+  cancel-in-progress: false
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Fetch + classify + build dashboard
+        env:
+          SOCIALDATA_API_KEY: ${{ secrets.SOCIALDATA_API_KEY }}
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+          ZAI_BASE_URL: ${{ secrets.ZAI_BASE_URL }}
+          ZAI_MODEL: ${{ secrets.ZAI_MODEL }}
+        run: python src/main.py
+
+      - name: Commit if data/docs changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain data/ docs/)" ]; then
+            git add data/ docs/
+            git commit -m "track: hourly update $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          else
+            echo "no changes to commit"
+          fi
