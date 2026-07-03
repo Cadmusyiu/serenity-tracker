@@ -64,6 +64,12 @@ def render_dashboard(data: dict, out_dir: str, handle: str = "aleabitoreddit") -
     stocks_dir = os.path.join(out_dir, "stocks")
     os.makedirs(stocks_dir, exist_ok=True)
 
+    # 清掉舊的股票頁（避免已不再被提及的 ticker 殘留，如 sample 遺留的 AVGO.html）
+    for old in os.listdir(stocks_dir):
+        op = os.path.join(stocks_dir, old)
+        if os.path.isfile(op):
+            os.remove(op)
+
     # 主頁
     index_tmpl = env.get_template("index.html")
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f:
