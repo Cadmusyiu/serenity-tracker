@@ -5,7 +5,9 @@ name: track
 on:
   workflow_dispatch:
   schedule:
-    - cron: '7 * * * *'  # 每小時 :07（避開整點流量）
+    # 主要觸發 = 本機 LaunchAgent（com.cadmus.serenity-tracker）每小時 :07 準時 workflow_dispatch。
+    # GH Actions schedule cron 不準時（間隔 1.5–4.5hr），這裡僅留每 6 小時當 Mac mini 離線時的後備。
+    - cron: '37 */6 * * *'
 
 permissions:
   contents: write
