@@ -60,13 +60,18 @@ def run_live() -> None:
     added = merge(mentions, MENTIONS_PATH)
     print(f"📜 [live] merged {added} new mentions into {MENTIONS_PATH}")
 
-    # since_id 用數值最大的 tweet id（字串比較對 snowflake id 等價數值比較）
+    # since_id 永遠前進並持久化（避免下次重抓同樣貼文；state.json 會 commit 記錄進度）
     latest_id = max(t.id for t in tweets)
     save_state(STATE_PATH, latest_id, datetime.now(timezone.utc).isoformat())
     print(f"✅ [live] state updated since_id={latest_id}")
 
-    data = build(MENTIONS_PATH, DOCS_DIR, handle=HANDLE)
-    print(f"✅ [live] dashboard rebuilt. {data['total_mentions']} total mentions, {len(data['stocks'])} stocks")
+    # 只在有新 mention 時才重建 dashboard ——
+    # 否則 generated_at 時間戳會造成 docs 假 diff → 每次都 commit + 無效 Pages 部署
+    if added > 0:
+        data = build(MENTIONS_PATH, DOCS_DIR, handle=HANDLE)
+        print(f"✅ [live] dashboard rebuilt. {data['total_mentions']} total mentions, {len(data['stocks'])} stocks")
+    else:
+        print("🌐 [live] no new mentions; skip dashboard rebuild")
 
 
 def main() -> None:
